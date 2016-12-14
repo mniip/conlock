@@ -1,0 +1,28 @@
+#!/bin/bash
+
+for i in /proc/*/exe; do
+	proc="${i%%/exe}"
+	if [ "$(cat "$proc/comm")" == "Xorg" ]; then
+		tty="$(ps -hq "${proc##/proc/}" -o "/dev/%y")"
+		if [ "$tty" = "/dev/?" ]; then
+			unset tty
+		else
+			for p in $(ps -ht "$tty" -o "%p"); do
+				if grep -q "DISPLAY=$DISPLAY" "/proc/$p/environ" 2>/dev/null; then
+					pid="${proc##/proc/}"
+					break
+				fi
+			done
+			if [ "x$pid" != "x" ]; then
+				break
+			fi
+		fi
+	fi
+done
+
+if [ "x$pid" = "x" ]; then
+	echo "Could not find Xserver process for DISPLAY=$DISPLAY" >2
+	exit 1
+fi
+
+"$(dirname "$0")"/screen_recon "$tty" "$pid" "$(dirname "$0")"/screen_dialog "$(whoami)"

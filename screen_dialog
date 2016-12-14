@@ -1,0 +1,32 @@
+#!/bin/bash
+
+declare -A devices
+
+for dev in $(xinput list --id-only); do
+	if xinput list-props "$dev" 2>/dev/null | grep -q "Device Enabled .*:.*1"; then
+		devices["$dev"]="1"
+		xinput disable "$dev" 2>/dev/null
+	fi
+done
+
+function restore()
+{
+	for dev in "${!devices[@]}"; do
+		xinput enable "$dev" 2>/dev/null
+	done
+	exit
+}
+trap restore EXIT INT TERM
+
+clear
+stty sane -brkint -isig noflsh icanon -iexten
+
+uname -snr
+while true; do
+	echo
+	echo "User: $1"
+	if su "$1" -c 'exec -a login su "'"$1"'" -c true'; then
+		break
+	fi
+	sleep 1
+done
