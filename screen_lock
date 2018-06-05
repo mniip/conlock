@@ -2,7 +2,7 @@
 
 for i in /proc/*/exe; do
 	proc="${i%%/exe}"
-	if [ "$(cat "$proc/comm")" == "Xorg" ]; then
+	if [ "$(cat "$proc/comm")" == "Xorg" -o "$(cat "$proc/comm")" == "X" ]; then
 		tty="$(ps -hq "${proc##/proc/}" -o "/dev/%y")"
 		if [ "$tty" = "/dev/?" ]; then
 			unset tty
@@ -21,7 +21,7 @@ for i in /proc/*/exe; do
 done
 
 if [ "x$pid" = "x" ]; then
-	echo "Could not find Xserver process for DISPLAY=$DISPLAY" >2
+	echo "Could not find Xserver process for DISPLAY=$DISPLAY" >&2
 	exit 1
 fi
 
